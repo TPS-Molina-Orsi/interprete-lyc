@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "**.txt"
+      - "manifest/**"
+      - "docs/**"
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+    paths-ignore:
+      - "**.md"
+      - "**.txt"
+      - "manifest/**"
+      - "docs/**"
+
+jobs:
+  # Clippy es un linter. Tiene muchas cosas rompe guindas pero tira buenos tips a veces. En el Cargo.toml tengo algunos ignores.
+  lint:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: run clippy
+        run: |
+          rustup update --no-self-update stable
+          rustup component add clippy
+          make clippy
+
+  # Formatter, solo para que los commits no tengan diffs al dope.
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: run rustfmt
+        run: |
+          rustup update --no-self-update nightly
+          rustup component add rustfmt
+          make format-check
+  # Tratamos de compilarlo
+  build:
+    name: build
+    # Si no pasa el linter, ni nos calentamos en compilarlo.
+    needs: [lint]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          rustup update --no-self-update
+          make build
+
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust
+        run: |
+          rustup update --no-self-update
+          rustc --version
+
+      - name: Check tests
+        # Chequeamos que los tests al menos compilen
+        run: cargo check --tests
+
+      # Ahora si, corremos los tests.
+      - name: Run tests
+        run: make test
