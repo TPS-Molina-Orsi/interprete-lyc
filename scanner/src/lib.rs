@@ -41,25 +41,22 @@ pub(crate) enum TokenType {
     Comma,
     // #
     Hashtag,
-    /// Identifer 
+    /// Identifer
     Identifier,
-    // 
+    //
     String {
         literal: String,
     },
-    // 
+    //
     Number {
         literal: String,
     },
 }
 
-
 enum Input {
     Stdin,
 
-    File {
-        path: PathBuf,
-    }
+    File { path: PathBuf },
 }
 
 struct Coordinate {
@@ -72,7 +69,7 @@ struct Location {
     coord: Coordinate,
 }
 
-struct Token {
+pub struct Token {
     token_type: TokenType,
 
     /// Lexeme that originated the Token
