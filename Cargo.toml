@@ -1,9 +1,7 @@
-[package]
-name = "interprete-lyc"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "3"
+members = [ "scanner","cli", "interpreter"]
 
-[dependencies]
 
-[lints.clippy]
+[workspace.lints.clippy]
 let_and_return = "allow"
