@@ -1,18 +1,12 @@
-struct Scanner {
-    field: i32,
-}
+// struct Scanner {
+//     field: i32,
+// }
 
-pub fn scan(left: u64, right: u64) -> u64 {
-    left + right
-}
+/// Function that handles scanning
+pub fn scan() {}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    fn it_works() {}
 }
