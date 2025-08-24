@@ -1,12 +1,14 @@
 use std::fmt::Display;
 use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 /// Enum > Trait
 
 /// "Traits" - Interfaz
 
 /// All the tokens we know
+#[derive(Debug)]
 pub(crate) enum TokenType {
     /// (
     LeftParens,
@@ -48,6 +50,32 @@ pub(crate) enum TokenType {
     Number {
         literal: String,
     },
+
+    // Palabras reservadas
+    ReservedKeywords(ReservedKeywords),
+}
+
+#[derive(Debug)]
+enum ReservedKeywords {
+    Define,
+
+    Let,
+}
+
+enum ReservedKeywordError {
+    NotReservedWord,
+}
+
+impl FromStr for ReservedKeywords {
+    type Err = ReservedKeywordError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "define" => Ok(ReservedKeywords::Define),
+            "let" => Ok(ReservedKeywords::Let),
+            _ => Err(ReservedKeywordError::NotReservedWord),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -69,11 +97,20 @@ macro_rules! lol {
     };
 }
 
+/// Vec of coordinates because a token can take up multiple coordinates
+#[derive(Debug)]
 struct Location {
     input: Input,
-    coord: Coordinate,
+    coordinates: Vec<Coordinate>,
 }
 
+impl Location {
+    fn new(input: Input, coordinates: Vec<Coordinate>) -> Location {
+        Location { input, coordinates }
+    }
+}
+
+#[derive(Debug)]
 pub struct Token {
     token_type: TokenType,
 
@@ -81,6 +118,16 @@ pub struct Token {
     lexeme: String,
 
     location: Location,
+}
+
+impl Token {
+    pub(crate) fn new(token_type: TokenType, lexeme: String, location: Location) -> Token {
+        Token {
+            token_type,
+            lexeme,
+            location,
+        }
+    }
 }
 
 // Lee todo el input y lo devuelve como un string. Lo aloca todo de una, asique que nadie lea Don Quijote de la Mancha con esta funcion!
@@ -93,6 +140,7 @@ fn read<R: Read>(mut input: BufReader<R>) -> String {
     buffer
 }
 
+#[derive(Clone, Debug)]
 pub enum Input {
     Stdin,
     File { path: PathBuf },
@@ -125,23 +173,54 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
         .map(|((character, line), column)| (character, line, column))
         .map(|(character, line, column)| (Coordinate::new(line as u32, column as u32), character));
 
-    let mut start = 0;
-    let mut current = 0;
-
     let mut tokens: Vec<Token> = Vec::new();
 
     // We read until we run out of characters
-    while let Some((coordiate, character)) = characters.next() {
-        dbg!(coordiate, character);
-        characters.next();
-        let token = match character {
-            '(' => todo!(),
-        };
+    while let Some((coordinate, character)) = characters.next() {
+        match character {
+            '(' => {
+                let token = Token::new(
+                    TokenType::RightParens,
+                    String::from("("),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            // Caso palabra: O es un identificador o una palabra reservada
+            letter if character.is_alphabetic() => {
+                let mut lexeme = String::from(letter);
+                let mut coordinates = vec![coordinate];
 
+                // Iterate until we find a space
+                while let Some((coord, letter)) = characters.next()
+                    && letter != ' '
+                {
+                    lexeme.push(letter);
+                    coordinates.push(coord);
+                }
+
+                // Si es una palabra reservada, la guardamos como tal. Sino, es un identificador.
+                let token_type = if let Ok(reserved_keyword) = ReservedKeywords::from_str(&lexeme) {
+                    TokenType::ReservedKeywords(reserved_keyword)
+                } else {
+                    TokenType::Identifier
+                };
+
+                let token = Token::new(
+                    token_type,
+                    lexeme,
+                    Location::new(input.clone(), coordinates),
+                );
+
+                tokens.push(token);
+            }
+            _ => (),
+        };
         // tokens.append(token);
     }
 
-    todo!()
+    std::dbg!(&tokens);
+    tokens
 }
 
 #[cfg(test)]
