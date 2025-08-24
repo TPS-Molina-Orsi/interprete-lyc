@@ -13,7 +13,7 @@ impl CliInput {
     fn handle(&self) {
         if let Some(path) = &self.file {
             // Read and execute file
-            interpreter::execute(path);
+            interpreter::execute(path.to_path_buf());
         } else {
             // REPL mode
             todo!("Implementar REPL");
