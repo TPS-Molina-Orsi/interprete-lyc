@@ -11,9 +11,9 @@ use std::str::FromStr;
 #[derive(Debug)]
 pub(crate) enum TokenType {
     /// (
-    LeftParens,
+    OpenParens,
     /// )
-    RightParens,
+    CloseParens,
     // +
     Plus,
     // -
@@ -27,15 +27,13 @@ pub(crate) enum TokenType {
     // \
     BackSlash,
     // [
-    LeftBracket,
+    OpenBracket,
     // ]
-    RightBracket,
+    CloseBracket,
     // '
     Quote,
     // `
     BackQuote,
-    // `
-    Quasiquote,
     // ,
     Comma,
     // #
@@ -175,13 +173,119 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
 
     let mut tokens: Vec<Token> = Vec::new();
 
+    println!(tokens);
+
     // We read until we run out of characters
     while let Some((coordinate, character)) = characters.next() {
         match character {
             '(' => {
                 let token = Token::new(
-                    TokenType::RightParens,
+                    TokenType::OpenParens,
                     String::from("("),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            ')' => {
+                let token = Token::new(
+                    TokenType::CloseParens,
+                    String::from(")"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '[' => {
+                let token = Token::new(
+                    TokenType::OpenBracket,
+                    String::from("["),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            ']' => {
+                let token = Token::new(
+                    TokenType::CloseBracket,
+                    String::from("["),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '+' => {
+                let token = Token::new(
+                    TokenType::Plus,
+                    String::from("+"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '-' => {
+                let token = Token::new(
+                    TokenType::Minus,
+                    String::from("-"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '*' => {
+                let token = Token::new(
+                    TokenType::Star,
+                    String::from("*"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '.' => {
+                let token = Token::new(
+                    TokenType::Star,
+                    String::from("."),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '/' => {
+                let token = Token::new(
+                    TokenType::ForwardSlash,
+                    String::from("/"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '\\' => { // must be double bc \ its a escape character in Rust
+                let token = Token::new(
+                    TokenType::ForwardSlash,
+                    String::from("\\"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '\'' => {
+                let token = Token::new(
+                    TokenType::Quote,
+                    String::from("\'"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '`' => {
+                let token = Token::new(
+                    TokenType::BackQuote,
+                    String::from("`"),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            ',' => {
+                let token = Token::new(
+                    TokenType::Comma,
+                    String::from(","),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            '#' => {
+                let token = Token::new(
+                    TokenType::Hashtag,
+                    String::from("#"),
                     Location::new(input.clone(), vec![coordinate]),
                 );
                 tokens.push(token);
