@@ -250,7 +250,8 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 );
                 tokens.push(token);
             }
-            '\\' => { // must be double bc \ its a escape character in Rust
+            '\\' => {
+                // must be double bc \ its a escape character in Rust
                 let token = Token::new(
                     TokenType::ForwardSlash,
                     String::from("\\"),
@@ -297,6 +298,31 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                     Location::new(input.clone(), vec![coordinate]),
                 );
                 tokens.push(token);
+            }
+            number if character.is_numeric() => {
+                let valid_chars_in_numbers = ['.'];
+
+                let mut lexeme = String::from(number);
+                let mut coordinates = vec![coordinate];
+                // Iterate until we find a space
+                while let Some((coord, letter)) = characters.next()
+                    && letter != ' '
+                    && (letter.is_numeric() || valid_chars_in_numbers.contains(&letter))
+                {
+                    lexeme.push(letter);
+                    coordinates.push(coord);
+                }
+
+                let token = Token::new(
+                    // In the case of a number, the literal _is_ the lexeme
+                    TokenType::Number {
+                        literal: lexeme.clone(),
+                    },
+                    lexeme,
+                    Location::new(input.clone(), coordinates),
+                );
+                tokens.push(token);
+            }
             // Caso palabra: O es un identificador o una palabra reservada
             letter if character.is_alphabetic() => {
                 let mut lexeme = String::from(letter);
