@@ -186,18 +186,16 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
 
     // Esto nos devuelve una tripla del tipo:
     //
+    #[allow(clippy::map_identity)]
     let columns = text
-        .lines()
-        .chain(["\n"])
+        .split_inclusive('\n')
         .flat_map(|line| line.chars().enumerate().map(|(column, _)| column))
-        // Le sumo 1 al line number porque enumerate arranca en 0 pero la
-        // primera linea de un archivo es la linea 1. Fuente: este archivo
+        // En Emacs, me figura que la primera columna es la 0, dejo asi?
         .map(|column_number| column_number);
 
     // We add the mut to use the next method
     let mut characters = text
-        .lines()
-        .chain(["\n"])
+        .split_inclusive('\n')
         .enumerate()
         // Le sumo 1 al line number porque enumerate arranca en 0 pero la
         // primera linea de un archivo es la linea 1. Fuente: este archivo
