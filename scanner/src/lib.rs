@@ -20,6 +20,8 @@ pub(crate) enum TokenType {
     Minus,
     // *
     Star,
+    // *
+    Equal,
     // . // second best comment
     Dot,
     // / // best comment
@@ -54,12 +56,45 @@ pub(crate) enum TokenType {
 }
 
 #[derive(Debug)]
+enum TokenTypeError {
+    NotKnownToken,
+}
+
+impl FromStr for TokenType {
+    type Err = TokenTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "(" => Ok(TokenType::OpenParens),
+            ")" => Ok(TokenType::CloseParens),
+            "+" => Ok(TokenType::Plus),
+            "-" => Ok(TokenType::Minus),
+            "*" => Ok(TokenType::Star),
+            "." => Ok(TokenType::Dot),
+            "/" => Ok(TokenType::ForwardSlash),
+            "\\" => Ok(TokenType::BackSlash),
+            "[" => Ok(TokenType::OpenBracket),
+            "]" => Ok(TokenType::CloseBracket),
+            "`" => Ok(TokenType::BackQuote),
+            "," => Ok(TokenType::Comma),
+            "#" => Ok(TokenType::Hashtag),
+            reserved if ReservedKeywords::from_str(s).is_ok() => {
+                let reserved = ReservedKeywords::from_str(reserved).unwrap();
+                Ok(TokenType::ReservedKeywords(reserved))
+            }
+            _ => Err(TokenTypeError::NotKnownToken),
+        }
+    }
+}
+
+#[derive(Debug)]
 enum ReservedKeywords {
     Define,
 
     Let,
 }
 
+#[derive(Debug)]
 enum ReservedKeywordError {
     NotReservedWord,
 }
@@ -153,31 +188,44 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
     //
     let columns = text
         .lines()
+        .chain(["\n"])
         .flat_map(|line| line.chars().enumerate().map(|(column, _)| column))
         // Le sumo 1 al line number porque enumerate arranca en 0 pero la
         // primera linea de un archivo es la linea 1. Fuente: este archivo
-        .map(|column_number| (column_number + 1));
+        .map(|column_number| column_number);
 
     // We add the mut to use the next method
     let mut characters = text
         .lines()
+        .chain(["\n"])
         .enumerate()
         // Le sumo 1 al line number porque enumerate arranca en 0 pero la
         // primera linea de un archivo es la linea 1. Fuente: este archivo
+        // Preserve newlines
         .map(|(line_number, line)| (line_number + 1, line))
         .flat_map(|(line_number, line)| line.chars().map(move |cha| (cha, line_number)))
-        // Le anado las columnas
         .zip(columns)
+        // Le anado las columnas
         .map(|((character, line), column)| (character, line, column))
-        .map(|(character, line, column)| (Coordinate::new(line as u32, column as u32), character));
+        .map(|(character, line, column)| (Coordinate::new(line as u32, column as u32), character))
+        .peekable();
 
+    dbg!(&characters);
     let mut tokens: Vec<Token> = Vec::new();
-
-    println!(tokens);
 
     // We read until we run out of characters
     while let Some((coordinate, character)) = characters.next() {
+        // dbg!(&character);
         match character {
+            // We found a comment
+            ';' => {
+                // Cuando encontramos un comentario, salteamos hasta el primer newline
+                while let Some((_, letter)) = characters.next()
+                    && letter != '\n'
+                {
+                    dbg!(letter);
+                }
+            }
             '(' => {
                 let token = Token::new(
                     TokenType::OpenParens,
@@ -293,7 +341,7 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
             }
             '=' => {
                 let token = Token::new(
-                    TokenType::Hashtag,
+                    TokenType::Equal,
                     String::from("="),
                     Location::new(input.clone(), vec![coordinate]),
                 );
@@ -328,13 +376,23 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 let mut lexeme = String::from(letter);
                 let mut coordinates = vec![coordinate];
 
-                // Iterate until we find a space
-                while let Some((coord, letter)) = characters.next()
-                    && letter != ' '
-                {
-                    lexeme.push(letter);
-                    coordinates.push(coord);
+                if let Some((_, next)) = characters.peek() {
+                    // Si es parte de los Token conocidos, corta. Puede estar pegado al character
+                    // Ej: (define (factorial n)
+                    // Esto trata de atrapar el ) en n)
+                    if TokenType::from_str(next.to_string().as_str()).is_err() {
+                        while let Some((coord, letter)) = characters.next()
+                            && letter != ' '
+                        {
+                            dbg!(&letter);
+
+                            lexeme.push(letter);
+                            coordinates.push(coord);
+                        }
+                    }
                 }
+
+                // Iterate until we find a space
 
                 // Si es una palabra reservada, la guardamos como tal. Sino, es un identificador.
                 let token_type = if let Ok(reserved_keyword) = ReservedKeywords::from_str(&lexeme) {
