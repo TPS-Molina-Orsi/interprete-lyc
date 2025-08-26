@@ -210,11 +210,10 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
         .map(|(character, line, column)| (Coordinate::new(line as u32, column as u32), character))
         .peekable();
 
-    dbg!(&characters);
     let mut tokens: Vec<Token> = Vec::new();
 
     // We read until we run out of characters
-    while let Some((coordinate, character)) = characters.next() {
+    while let Some((coordinate, character)) = dbg!(characters.next()) {
         // dbg!(&character);
         match character {
             // We found a comment
@@ -353,12 +352,20 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 let mut lexeme = String::from(number);
                 let mut coordinates = vec![coordinate];
                 // Iterate until we find a space
-                while let Some((coord, letter)) = characters.next()
-                    && letter != ' '
-                    && (letter.is_numeric() || valid_chars_in_numbers.contains(&letter))
-                {
-                    lexeme.push(letter);
-                    coordinates.push(coord);
+
+                if let Some((_, next)) = characters.peek() {
+                    // Si es parte de los Token conocidos, corta. Puede estar pegado al character
+                    // Ej: (define (factorial n)
+                    // Esto trata de atrapar el ) en n)
+                    if TokenType::from_str(next.to_string().as_str()).is_err() {
+                        while let Some((coord, letter)) = characters.next()
+                            && letter != ' '
+                            && (letter.is_numeric() || valid_chars_in_numbers.contains(&letter))
+                        {
+                            lexeme.push(letter);
+                            coordinates.push(coord);
+                        }
+                    }
                 }
 
                 let token = Token::new(
@@ -384,8 +391,6 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                         while let Some((coord, letter)) = characters.next()
                             && letter != ' '
                         {
-                            dbg!(&letter);
-
                             lexeme.push(letter);
                             coordinates.push(coord);
                         }
