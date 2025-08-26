@@ -290,6 +290,13 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 );
                 tokens.push(token);
             }
+            '=' => {
+                let token = Token::new(
+                    TokenType::Hashtag,
+                    String::from("="),
+                    Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
             // Caso palabra: O es un identificador o una palabra reservada
             letter if character.is_alphabetic() => {
                 let mut lexeme = String::from(letter);
