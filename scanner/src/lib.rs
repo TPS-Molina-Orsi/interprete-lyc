@@ -279,14 +279,6 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 );
                 tokens.push(token);
             }
-            '.' => {
-                let token = Token::new(
-                    TokenType::Star,
-                    String::from("."),
-                    Location::new(input.clone(), vec![coordinate]),
-                );
-                tokens.push(token);
-            }
             '/' => {
                 let token = Token::new(
                     TokenType::ForwardSlash,
@@ -341,6 +333,41 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                     TokenType::Equal,
                     String::from("="),
                     Location::new(input.clone(), vec![coordinate]),
+                );
+                tokens.push(token);
+            }
+            // String
+            '\"' => {
+                let mut lexeme = String::from("\"");
+                let mut coordinates = vec![coordinate];
+                // Iterate until we find a space
+
+                if let Some((_, next)) = characters.peek() {
+                    // Leemos hasta que haya otro "
+                    // Si es parte de los Token conocidos, corta. Puede estar pegado al character
+                    // Ej: (define (factorial n)
+                    // Esto trata de atrapar el ) en n)
+                    if TokenType::from_str(next.to_string().as_str()).is_err() {
+                        while let Some((coord, letter)) = characters.next()
+                            && letter != '\"'
+                        {
+                            lexeme.push(letter);
+                            coordinates.push(coord);
+                        }
+                    }
+                }
+
+                let literal = {
+                    let mut chars = lexeme.chars();
+                    chars.next();
+                    chars.next_back();
+                    chars.as_str().to_string()
+                };
+
+                let token = Token::new(
+                    TokenType::String { literal },
+                    lexeme,
+                    Location::new(input.clone(), coordinates),
                 );
                 tokens.push(token);
             }
