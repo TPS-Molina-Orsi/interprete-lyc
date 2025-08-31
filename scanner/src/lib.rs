@@ -24,6 +24,14 @@ pub(crate) enum TokenType {
     Equal,
     // . // second best comment
     Dot,
+    // <
+    Less,
+    // <=
+    LessEqual,
+    // >
+    Great,
+    // >=
+    GreatEqual,
     // / // best comment
     ForwardSlash,
     // \
@@ -71,6 +79,10 @@ impl FromStr for TokenType {
             "-" => Ok(TokenType::Minus),
             "*" => Ok(TokenType::Star),
             "." => Ok(TokenType::Dot),
+            "<" => Ok(TokenType::Less),
+            "<=" => Ok(TokenType::LessEqual),
+            ">" => Ok(TokenType::Great),
+            ">=" => Ok(TokenType::GreatEqual),
             "/" => Ok(TokenType::ForwardSlash),
             "\\" => Ok(TokenType::BackSlash),
             "[" => Ok(TokenType::OpenBracket),
@@ -278,6 +290,43 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                     Location::new(input.clone(), vec![coordinate]),
                 );
                 tokens.push(token);
+            },
+            // In the two cases below I have to check if I have an equal operator concatened
+            '<' => {
+                // The less is the last char or I have something distinct to equal.
+                if !let Some((next_coord, next_char)) = characters.peek() || next_char != '=' {
+                    let token = Token::new(
+                    TokenType::Less,
+                    String::from("<"),
+                    Location::new(input.clone(), vec![coordinate]),
+                    );
+                    tokens.push(token);
+                } else {
+                    let token = Token::new(
+                    TokenType::LessEqual,
+                    String::from("<="),
+                    Location::new(input.clone(), vec![coordinate]),
+                    );
+                    tokens.push(token);
+                }
+            }
+            '>' => {
+                // Same idea as above
+                if !let Some((next_coord, next_char)) = characters.peek() || next_char != '=' {
+                    let token = Token::new(
+                    TokenType::Great,
+                    String::from(">"),
+                    Location::new(input.clone(), vec![coordinate]),
+                    );
+                    tokens.push(token);
+                } else {
+                    let token = Token::new(
+                    TokenType::GreatEqual,
+                    String::from(">="),
+                    Location::new(input.clone(), vec![coordinate]),
+                    );
+                    tokens.push(token);
+                }
             }
             '/' => {
                 let token = Token::new(
@@ -373,6 +422,7 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
             }
             number if character.is_numeric() => {
                 let valid_chars_in_numbers = ['.'];
+                let mut count_of_dots = 0;
 
                 let mut lexeme = String::from(number);
                 let mut coordinates = vec![coordinate];
@@ -386,9 +436,15 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                         while let Some((coord, letter)) = characters.next()
                             && letter != ' '
                             && (letter.is_numeric() || valid_chars_in_numbers.contains(&letter))
-                        {
-                            lexeme.push(letter);
-                            coordinates.push(coord);
+                        {   
+                            if valid_chars_in_numbers.contains(&letter) && count_of_dots >= 1 {
+                                // I don't know how to do it, i throw panic (go moment)
+                                panic!("Invalid number detected!");
+                            } else {
+                                lexeme.push(letter);
+                                coordinates.push(coord);
+                                count_of_dots += 1;
+                            }
                         }
                     }
                 }
