@@ -102,7 +102,8 @@ impl FromStr for TokenType {
 #[derive(Debug)]
 enum ReservedKeywords {
     Define,
-
+    If,
+    Not,
     Let,
 }
 
@@ -118,6 +119,8 @@ impl FromStr for ReservedKeywords {
         match s {
             "define" => Ok(ReservedKeywords::Define),
             "let" => Ok(ReservedKeywords::Let),
+            "if" => Ok(ReservedKeywords::If),
+            "not" => Ok(ReservedKeywords::Not),
             _ => Err(ReservedKeywordError::NotReservedWord),
         }
     }
