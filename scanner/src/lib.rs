@@ -297,7 +297,7 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
             // In the two cases below I have to check if I have an equal operator concatened
             '<' => {
                 // The less is the last char or I have something distinct to equal.
-                if !let Some((next_coord, next_char)) = characters.peek() || next_char != '=' {
+                if !(matches!(characters.peek(), Some((_, '=')))) {
                     let token = Token::new(
                     TokenType::Less,
                     String::from("<"),
@@ -315,7 +315,7 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
             }
             '>' => {
                 // Same idea as above
-                if !let Some((next_coord, next_char)) = characters.peek() || next_char != '=' {
+                if !(matches!(characters.peek(), Some((_, '=')))) {
                     let token = Token::new(
                     TokenType::Great,
                     String::from(">"),
@@ -390,7 +390,7 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
             }
             // String
             '\"' => {
-                let mut lexeme = String::from("\"");
+                let mut lexeme = String::from('"');
                 let mut coordinates = vec![coordinate];
                 // Iterate until we find a space
 
@@ -409,10 +409,11 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                     }
                 }
 
+                lexeme.push('"');
+
                 let literal = {
                     let mut chars = lexeme.chars();
                     chars.next();
-                    chars.next_back();
                     chars.as_str().to_string()
                 };
 
@@ -424,31 +425,28 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 tokens.push(token);
             }
             number if character.is_numeric() => {
-                let valid_chars_in_numbers = ['.'];
                 let mut count_of_dots = 0;
 
                 let mut lexeme = String::from(number);
                 let mut coordinates = vec![coordinate];
                 // Iterate until we find a space
 
-                if let Some((_, next)) = characters.peek() {
-                    // Si es parte de los Token conocidos, corta. Puede estar pegado al character
-                    // Ej: (define (factorial n)
-                    // Esto trata de atrapar el ) en n)
-                    if TokenType::from_str(next.to_string().as_str()).is_err() {
-                        while let Some((coord, letter)) = characters.next()
-                            && letter != ' '
-                            && (letter.is_numeric() || valid_chars_in_numbers.contains(&letter))
-                        {   
-                            if valid_chars_in_numbers.contains(&letter) && count_of_dots >= 1 {
-                                // I don't know how to do it, i throw panic (go moment)
-                                panic!("Invalid number detected!");
-                            } else {
-                                lexeme.push(letter);
-                                coordinates.push(coord);
-                                count_of_dots += 1;
-                            }
+                while let Some((_, letter)) = characters.peek() {
+                    if *letter == '(' || *letter == ')' || *letter == ' ' || *letter == '\n' {
+                        break;
+                    }
+                    if *letter == '.' {
+                        if count_of_dots >= 1 {
+                            panic!("Invalid number detected");
                         }
+                        count_of_dots += 1;
+                    }
+                    if *letter != '.' && !(*letter).is_numeric() {
+                        panic!("Invalid number");
+                    }
+                    if let Some((coord, letter)) = characters.next() {   
+                        lexeme.push(letter);
+                        coordinates.push(coord);
                     }
                 }
 
@@ -467,17 +465,16 @@ pub fn scan(input: Input, text: String) -> Vec<Token> {
                 let mut lexeme = String::from(letter);
                 let mut coordinates = vec![coordinate];
 
-                if let Some((_, next)) = characters.peek() {
+                while let Some((_, next)) = characters.peek() {
+                    if *next == '(' || *next == ')' || *next == ' ' || *next == '\n' {
+                        break;
+                    }
                     // Si es parte de los Token conocidos, corta. Puede estar pegado al character
                     // Ej: (define (factorial n)
                     // Esto trata de atrapar el ) en n)
-                    if TokenType::from_str(next.to_string().as_str()).is_err() {
-                        while let Some((coord, letter)) = characters.next()
-                            && letter != ' '
-                        {
-                            lexeme.push(letter);
-                            coordinates.push(coord);
-                        }
+                    if let Some((coord, letter)) = characters.next() {   
+                        lexeme.push(letter);
+                        coordinates.push(coord);
                     }
                 }
 
