@@ -8,8 +8,8 @@ use std::str::FromStr;
 /// "Traits" - Interfaz
 
 /// All the tokens we know
-#[derive(Debug)]
-pub(crate) enum TokenType {
+#[derive(Debug, Clone, PartialEq)]
+pub enum TokenType {
     /// (
     OpenParens,
     /// )
@@ -20,7 +20,7 @@ pub(crate) enum TokenType {
     Minus,
     // *
     Star,
-    // *
+    // =
     Equal,
     // . // second best comment
     Dot,
@@ -64,7 +64,7 @@ pub(crate) enum TokenType {
 }
 
 #[derive(Debug)]
-enum TokenTypeError {
+pub enum TokenTypeError {
     NotKnownToken,
 }
 
@@ -99,7 +99,7 @@ impl FromStr for TokenType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 enum ReservedKeywords {
     Define,
     If,
@@ -126,7 +126,7 @@ impl FromStr for ReservedKeywords {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Coordinate {
     line: u32,
     column: u32,
@@ -146,7 +146,7 @@ macro_rules! lol {
 }
 
 /// Vec of coordinates because a token can take up multiple coordinates
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Location {
     input: Input,
     coordinates: Vec<Coordinate>,
@@ -158,9 +158,9 @@ impl Location {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
-    token_type: TokenType,
+    pub token_type: TokenType,
 
     /// Lexeme that originated the Token
     lexeme: String,

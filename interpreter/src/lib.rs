@@ -1,4 +1,5 @@
 use scanner::scan;
+use parser::Parser;
 use std::{
     fs::File,
     io::BufReader,
@@ -24,4 +25,6 @@ pub fn execute(path: PathBuf) {
     let text = std::fs::read_to_string(path).expect("Failed to read filed");
     let tokens = scan(input, text);
     // All the interpreter steps go here
+    let expressions = Parser::new(tokens).parse();
+    log::trace!("Parsed expression: {:#?}", expressions);
 }
