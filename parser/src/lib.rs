@@ -5,11 +5,10 @@ use log;
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    Binary {
-        left_expr: Box<Expression>,
+    Procedure {
         operator: Token,
-        right_expr: Box<Expression>
-    }, 
+        operands: Vec<Expression>
+    },
     Unary {
         operand: TokenType,
         expr: Box<Expression>
@@ -21,8 +20,8 @@ pub enum Expression {
 
 
 impl Expression {
-    pub fn new_binary(left_expr: Expression, operator: Token, right_expr: Expression) -> Self {
-        return Expression::Binary { left_expr: Box::new(left_expr), operator: operator, right_expr: Box::new(right_expr) }
+    pub fn new_binary(operator: Token, operands: Vec<Expression>) -> Self {
+        return Expression::Procedure { operator: operator, operands: operands }
     }
 
     pub fn new_literal(value: LiteralValue) -> Self {
@@ -59,7 +58,14 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Expression {
-        log::trace!("{:#?}", self.peek());
+        let result = self._parse();
+        if self.count_open_parenthesis != self.count_close_parenthesis {
+            panic!("Bad amount of parenthesis. Have {} open ones and {} close ones", self.count_open_parenthesis, self.count_close_parenthesis)
+        }
+        return result;
+    }
+
+    fn _parse(&mut self) -> Expression {
         if self.peek().token_type == TokenType::OpenParens {
             self.count_open_parenthesis += 1;
             self.consume(); // Consume the parens
@@ -77,18 +83,22 @@ impl Parser {
                     panic!("Wrong operator");
             }
             let operator = self.previous().clone();
-            return Expression::new_binary(self.parse(), operator, self.parse())
+            let mut operands = Vec::new();
+            while self.peek().token_type != TokenType::CloseParens {
+                operands.push(self._parse());
+            }
+            self.consume();
+            self.count_close_parenthesis += 1;
+            return Expression::new_binary(operator, operands);
         } else if self.peek().token_type == TokenType::CloseParens {
             self.count_close_parenthesis += 1;
             self.consume();
         }
-
         if let TokenType::Number { literal } = &self.peek().token_type {
             let lit = literal.clone();
             self.consume();
             let number: f64 = lit.parse::<f64>()
                 .expect("Invalid number literal");
-            println!("en number: ");
             log::trace!("{:#?}", self.peek());
             return Expression::new_literal(LiteralValue::Number(number));
         } else if let TokenType::String { literal } = &self.peek().token_type {
