@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = [ "scanner","cli", "interpreter"]
+members = [ "scanner","cli", "interpreter", "parser", "evaluator"]
 
 [workspace.lints.clippy]
 let_and_return = "allow"

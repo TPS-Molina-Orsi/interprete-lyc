@@ -5,7 +5,7 @@ use std::{
     io::BufReader,
     path::{Path, PathBuf},
 };
-
+use evaluator::Evaluator;
 use log;
 
 /// Structure that holds interpreter information.
@@ -26,5 +26,7 @@ pub fn execute(path: PathBuf) {
     let tokens = scan(input, text);
     // All the interpreter steps go here
     let expressions = Parser::new(tokens).parse();
-    log::trace!("Parsed expression: {:#?}", expressions);
+    let result = Evaluator::new(expressions).evaluate();
+    println!("{}", result);
+    log::trace!("Parsed expression: {:#?}", result);
 }
