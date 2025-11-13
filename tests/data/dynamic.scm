@@ -1,0 +1,10 @@
+(define (cool-function arg)
+  (let ((point-a "Scheme is a cool language")
+        (point-b "It is also dynamic, allow me to demonstrate:")
+        (point-c 4.5)
+        (point-d (list 1 2 3)))
+    (println point-a)
+    (println point-b)
+    (if (eq? arg "list")
+        point-d
+        point-c)))

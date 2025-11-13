@@ -1,12 +1,11 @@
 [package]
-name = "interpreter"
+name = "evaluator"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-scanner = { path = "../scanner" }
 parser = { path = "../parser" }
-evaluator = { path = "../evaluator" }
+scanner = { path = "../scanner" } 
 log.workspace = true
 
 [lints]
