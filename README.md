@@ -1,5 +1,3 @@
 # interprete-lyc
 
-## Propuestas nombres
-
-- Essaya (.ess)
+Intérprete sencillo del lenguaje Scheme de la familia de lenguajes LISP desarrollado en Rust.
