@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 scanner = { path = "../scanner" }
+log.workspace = true
 
 [lints]
 workspace = true
